@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'mechanize'
 require 'date'
+require 'zip'
 
 email = ARGV[0]
 password = ARGV[1]
@@ -29,7 +30,6 @@ form.click_button
 page = agent.get('http://www.endomondo.com/workouts')
 link = page.search('//div[@class="workoutSectionSelector"]//li[2]/a')[0].attributes['onclick'].value.match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
 page = agent.get("http://www.endomondo.com/workouts#{link}")
-page.save_as("list.html")
 
 # to store all workouts
 workouts = Array.new
@@ -40,10 +40,10 @@ loop do
     href = a.get_attribute('href')
     date = Date.parse(a.text)
     if date >= until_date
-      puts "added #{href}"
+      $stderr.puts "added #{href}"
       workouts.push(href)
     else
-      puts "ignored #{href}, too old"
+      $stderr.puts "ignored #{href}, too old"
     end
   }
 
@@ -55,15 +55,24 @@ loop do
   page = agent.get("http://www.endomondo.com/workouts#{link}")
 end
 
-# now download each workout
-# TODO: don't download to file, download directly to STDOUT as zip
+# now download each workout and put them in a temporary zip file
 
-workouts.each { |href|
-  puts "fetching #{href}"
-  page = agent.get(href)
-  link = page.link_with(:text => 'Export').attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
-  page = agent.get("http://www.endomondo.com/workouts/#{link}")
-  link = page.link_with(:text => /#{format}/).href
-                        page = agent.get("http://www.endomondo.com/workouts/#{link}")
-                        page.save_as("#{href.slice(/\d+/)}.#{format}")
-                        }
+temp_zip = Tempfile.new(rand(32**8).to_s(32))
+Zip::ZipOutputStream.open(temp_zip.path) { |zip|
+  workouts.each { |href|
+    $stderr.puts "fetching #{href}"
+    page = agent.get(href)
+    link = page.link_with(:text => 'Export').attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
+    page = agent.get("http://www.endomondo.com/workouts/#{link}")
+    link = page.link_with(:text => /#{format}/).href
+    page = agent.get("http://www.endomondo.com/workouts/#{link}")
+    # page.save_as("#{href.slice(/\d+/)}.#{format}")
+    zip.put_next_entry("#{href.slice(/\d+/)}.#{format}")
+    zip.print page.body
+  }
+}
+
+$stdout.puts temp_zip.read
+
+temp_zip.close
+temp_zip.delete
