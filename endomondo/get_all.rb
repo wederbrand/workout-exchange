@@ -8,9 +8,9 @@ require 'zip'
 email = ARGV[0]
 password = ARGV[1]
 format = ARGV[2]
-until_date = Date.today
+from_date = Date.today
 if not ARGV[3].nil?
-  until_date = Date.parse(ARGV[3])
+  from_date = Date.parse(ARGV[3])
 end
 
 agent = Mechanize.new { |agent|
@@ -28,34 +28,29 @@ form.click_button
 
 # fetch the workout page
 page = agent.get('http://www.endomondo.com/workouts')
-link = page.search('//div[@class="workoutSectionSelector"]//li[2]/a')[0].attributes['onclick'].value.match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
-page = agent.get("http://www.endomondo.com/workouts#{link}")
+              
+# get current year
+year = page.search('//div[@class="current"]')[0].text.to_i              
+# get current month
+month = page.search('//li[@class="current"]/a/@onclick').first.value.match(/months:(\d+):month/)[1].to_i+1
+# get current day
+day = page.search('//div[div/span[@class="selected"]]/span')[0].text.to_i
 
+target_date = Date.new(year, month, day)
 # to store all workouts
 workouts = Array.new
-
-loop do
-  # all workouts on this page
-  page.search('//div//tr/td[@class="date"]/a').each { |a|
-    href = a.get_attribute('href')
-    date = Date.parse(a.text)
-    if date >= until_date
-      $stderr.puts "added #{href}"
-      workouts.push(href)
-    else
-      $stderr.puts "ignored #{href}, too old"
-    end
-  }
-
-  # if the nav-back span doesn't hold a link we're at the last one and it's time to exit
-  break if page.search('//span[@class="nav-back"]/a').empty?
-
-  # if we didn't break we'll go to the next page now
-  link = page.search('//span[@class="nav-back"]/a')[0].attributes["onclick"].value.match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
-  page = agent.get("http://www.endomondo.com/workouts#{link}")
-end
-
-# now download each workout and put them in a temporary zip file
+                                         
+while target_date >= from_date do
+  # add all workouts from this day, if any
+  $stderr.puts "checking #{target_date}"
+  page.search("//div[span[@class='cday'][.=#{target_date.day}]]/div/span/a/@href").each do |link|
+    workouts.push(link.value)
+    $stderr.puts "found #{link.value}"
+  end
+                          
+  # todo: change month and year if needed.
+  target_date = target_date - 1;
+end 
 
 temp_zip = Tempfile.new(rand(32**8).to_s(32))
 Zip::ZipOutputStream.open(temp_zip.path) { |zip|
