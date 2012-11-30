@@ -43,7 +43,7 @@ workouts = Array.new
 while target_date >= from_date do
   # add all workouts from this day, if any
   $stderr.puts "checking #{target_date}"
-  page.search("//div[span[@class='cday'][.=#{target_date.day}]]/div/span/a/@href").each do |link|
+  page.search("//td[not(contains(@class, 'not-in-month'))]/div[span[@class='cday'][.=#{target_date.day}]]/div/span/a/@href").each do |link|
     workouts.push(link.value)
     $stderr.puts "found #{link.value}"
   end
