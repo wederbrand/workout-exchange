@@ -47,9 +47,20 @@ while target_date >= from_date do
     workouts.push(link.value)
     $stderr.puts "found #{link.value}"
   end
-                          
-  # todo: change month and year if needed.
-  target_date = target_date - 1;
+  
+  if (target_date.day == 1)
+    $stderr.puts "changing month"
+    # got to previous month 
+    # find current month
+    # todo to to previous year if needed (month = 1)
+    prev_month_link = page.search('//div[@class="month-nav"]//li[@class="current"]').first.previous_sibling.search('a/@href').first.value
+    page = agent.get(prev_month_link)
+        
+    # create link for previous month
+    # click linke
+  
+  end
+  target_date -= 1;  
 end 
 
 temp_zip = Tempfile.new(rand(32**8).to_s(32))
@@ -58,7 +69,10 @@ Zip::ZipOutputStream.open(temp_zip.path) { |zip|
     $stderr.puts "fetching #{href}"
     page = agent.get(href)
     link = page.link_with(:text => 'Export').attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
-    page = agent.get("http://www.endomondo.com/workouts/#{link}")
+    # $stderr.puts "found #{link}"
+    href = href + "/" + link
+    # $stderr.puts "joined link #{href}"
+    page = agent.get(href)
     link = page.link_with(:text => /#{format}/).href
     page = agent.get("http://www.endomondo.com/workouts/#{link}")
     # page.save_as("#{href.slice(/\d+/)}.#{format}")
