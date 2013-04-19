@@ -30,7 +30,7 @@ form.click_button
 page = agent.get('http://www.endomondo.com/workouts')
               
 # get current year
-year = page.search('//div[@class="current"]')[0].text.to_i              
+year = page.search('//span[@class="year"]')[0].text.to_i              
 # get current month
 month = page.search('//li[@class="current"]/a/@onclick').first.value.match(/months:(\d+):month/)[1].to_i+1
 # get current day
