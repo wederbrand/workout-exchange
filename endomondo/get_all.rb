@@ -53,8 +53,14 @@ while target_date >= from_date do
     # got to previous month 
     # find current month
     # todo to to previous year if needed (month = 1)
-    prev_month_link = page.search('//div[@class="month-nav"]//li[@class="current"]').first.previous_sibling.search('a/@href').first.value
-    page = agent.get(prev_month_link)
+    if (target_date.month == 1)
+      $stderr.puts "changing year"
+      prev_year_link = page.search('//a[@class="previous"]/@href').first.value
+      page = agent.get(prev_year_link)
+    else  
+      prev_month_link = page.search('//div[@class="month-nav"]//li[@class="current"]').first.previous_sibling.search('a/@href').first.value
+      page = agent.get(prev_month_link)
+    end
         
     # create link for previous month
     # click linke
@@ -68,7 +74,12 @@ Zip::ZipOutputStream.open(temp_zip.path) { |zip|
   workouts.each { |href|
     $stderr.puts "fetching #{href}"
     page = agent.get(href)
-    link = page.link_with(:text => 'Export').attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
+    export = page.link_with(:text => 'Export')
+    if (export.nil?) 
+      $stderr.puts "missing export link, skipping"
+      next
+    end
+    link = export.attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
     # $stderr.puts "found #{link}"
     href = href + "/" + link
     # $stderr.puts "joined link #{href}"
