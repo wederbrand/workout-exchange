@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# before first use you need to "touch all.zip", it's used to know when the script was last run
+ENDOMONDO_USER=
+ENDOMONDO_PASS=
+
+STRAVA_USER=
+STRAVA_PASS=
+
+cd "$(dirname "$0")"
+./endomondo/download_all.rb $ENDOMONDO_USER $ENDOMONDO_PASS gpx $(date -r all.zip +%Y%m%d) > all.zip
+unzip all.zip 
+find . -name \*.gpx | cut -c 3- | xargs -n1 ./strava/upload_one.rb $STRAVA_USER $STRAVA_PASS
+rm *.gpx
+
