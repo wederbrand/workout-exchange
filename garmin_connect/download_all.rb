@@ -33,14 +33,18 @@ xml.remove_namespaces!
 
 xml.xpath("//activity").each do |activity| 
   id = activity.attribute('idValue').value
+  type = activity.attribute('activityType').value[/_(.*)/, 1]
   date_str = activity.xpath("summary/measurement[@measurementActivityField='measurementActivityField_beginTimestamp']").attribute("dateValue").value
   date = DateTime.parse(date_str)
-  if date < from_date
+  filename = "#{date.strftime('%Y%m%d-%H%M')}_#{type}_garmin.gpx"
+  puts filename
+  
+  if date <= from_date
     $stderr.puts "#{date} is before #{from_date}, breaking"
     break
   end
 
   url = "http://connect.garmin.com/proxy/activity-service-1.2/gpx/activity/#{id}?full=true"
-  $stderr.puts "downloading #{url}"
-  agent.get(url).save(id + ".gpx")
+  $stderr.puts "downloading #{url} to #{filename}"
+  agent.get(url).save(filename)
 end                                    
