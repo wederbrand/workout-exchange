@@ -3,7 +3,6 @@
 require 'rubygems'
 require 'mechanize'
 require 'date'
-require 'zip'
 
 email = ARGV[0]
 password = ARGV[1]
@@ -69,30 +68,27 @@ while target_date >= from_date do
   target_date -= 1;  
 end 
 
-temp_zip = Tempfile.new(rand(32**8).to_s(32))
-Zip::ZipOutputStream.open(temp_zip.path) { |zip|
-  workouts.each { |href|
-    $stderr.puts "fetching #{href}"
-    page = agent.get(href)
-    export = page.link_with(:text => 'Export')
-    if (export.nil?) 
-      $stderr.puts "missing export link, skipping"
-      next
-    end
-    link = export.attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
-    # $stderr.puts "found #{link}"
-    href = href + "/" + link
-    # $stderr.puts "joined link #{href}"
-    page = agent.get(href)
-    link = page.link_with(:text => /#{format}/).href
-    page = agent.get("http://www.endomondo.com/workouts/#{link}")
-    # page.save_as("#{href.slice(/\d+/)}.#{format}")
-    zip.put_next_entry("#{href.slice(/\d+/)}.#{format}")
-    zip.print page.body
-  }
+workouts.each { |href|
+  $stderr.puts "fetching #{href}"
+  page = agent.get(href)
+  export = page.link_with(:text => 'Export')
+  if (export.nil?) 
+    $stderr.puts "missing export link, skipping"
+    next
+  end
+  link = export.attributes['onclick'].match(/wicketAjaxGet\('(.*wicket.+?)'/)[1]
+  # $stderr.puts "found #{link}"
+  href = href + "/" + link
+  # $stderr.puts "joined link #{href}"
+  page = agent.get(href)
+  link = page.link_with(:text => /#{format}/).href
+  page = agent.get("http://www.endomondo.com/workouts/#{link}")
+  xml = Nokogiri::XML(page.body)
+  xml.remove_namespaces!
+  type = xml.search('//trk/type').text.downcase.sub(/_/, '')
+  dude = xml.search('//trk/trkseg/trkpt/time').first
+  date = DateTime.parse(xml.search('//trk/trkseg/trkpt/time').first.text)
+  filename = "#{date.strftime('%Y%m%d-%H%M')}_#{type}_endomondo.gpx"
+  $stderr.puts " to #{filename}"  
+  page.save_as(filename)
 }
-
-$stdout.puts temp_zip.read
-
-temp_zip.close
-temp_zip.delete
