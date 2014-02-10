@@ -14,9 +14,9 @@ agent = Mechanize.new { |agent|
 }
 
 # first log in
-page = agent.get('https://www.endomondo.com/access')
+page = agent.get('https://www.endomondo.com/login')
 
-form = page.form_with(:name => 'signInForm')
+form = page.form_with(:class => 'signInForm')
 form.field_with(:name => 'email').value = email
 form.field_with(:name => 'password').value = password
 form.click_button
