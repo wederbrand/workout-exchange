@@ -6,9 +6,9 @@ require 'date'
 
 user = ARGV[0]
 password = ARGV[1]
-from_date = Date.today
+from_date = Date.today.to_datetime
 if not ARGV[2].nil?
-  from_date = Date.parse(ARGV[2])
+  from_date = DateTime.parse(ARGV[2])
 end
 
 agent = Mechanize.new { |agent|
