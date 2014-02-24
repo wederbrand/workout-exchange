@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'mechanize'
 require 'date'
+require 'json'
 
 user = ARGV[0]
 password = ARGV[1]
