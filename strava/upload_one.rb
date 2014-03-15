@@ -20,7 +20,7 @@ a.get('http://www.strava.com/') do |home_page|
   end.submit
 
   # Click the upload link
-  upload_page = a.click(my_page.link_with(:text => /Upload Activity/))
+  upload_page = a.click(my_page.link_with(:text => /Upload/))
 
   # Upload from File
   upload_page = a.click(upload_page.link_with(:text => /From File/))
