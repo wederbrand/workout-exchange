@@ -11,7 +11,7 @@ ENDOMONDO_USER=
 ENDOMONDO_PASS=
 
 cd "$(dirname "$0")"
-./garmin_connect/download_all.rb $GARMIN_USER $GARMIN_PASS "$(date -r garmin +'%Y%m%d %H%M%S')"
+./garmin_connect/download_all.rb $GARMIN_USER $GARMIN_PASS "$(TZ=UTC date -r garmin +'%Y%m%d %H%M%S')"
 
 for i in `find . -name \*.gpx | cut -c3-`; do 
   ./garmin_connect/addTrkSeg.rb $i > $i.new
