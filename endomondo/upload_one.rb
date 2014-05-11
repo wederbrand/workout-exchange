@@ -11,6 +11,8 @@ file = ARGV[2]
 agent = Mechanize.new { |agent|
   agent.user_agent_alias= 'Mac Safari'
   agent.pluggable_parser['text/xml'] = Mechanize::Page
+  agent.open_timeout = 60
+  agent.read_timeout = 60
 }
 
 # first log in
@@ -31,14 +33,14 @@ page = agent.get('http://www.endomondo.com/' + page.iframe.src)
 
 # upload form
 form = page.form
-form.action = page.link_with(:text => 'Next').attributes['onclick'][/wicketSubmitFormById.*',/][30..-3]
+form.action = page.link_with(:text => 'Next').attributes['onclick'][/wicketSubmitFormById.*',/][/\?.*'/][0..-2]
 form.add_field!("uploadSumbit", value = nil)
 form.file_upload.file_name = file
 page = form.submit
 
 # review form
 form = page.form
-form.action = page.link_with(:text => 'Save').attributes['onclick'][/wicketSubmitFormById.*',/][30..-3]
+form.action = page.link_with(:text => 'Save').attributes['onclick'][/wicketSubmitFormById.*',/][/\?.*'/][0..-2]
 form.add_field!("reviewSumbit", value = nil)
 form.fields[1].option_with(:text => "Cycling, sport").click
 page = form.submit
