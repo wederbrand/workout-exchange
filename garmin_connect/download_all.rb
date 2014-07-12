@@ -60,22 +60,22 @@ form.field_with(:id => 'username').value = user
 form.field_with(:id => 'password').value = password
 form_result = form.click_button
 
-# find the url that gets us beck to connect.garmin.com
+# find the url that gets us back to connect.garmin.com
 login_url = form_result.body.scan(/response_url\s*=\s*'(.*)';/).first.first
 
 # and finally login to connect.garmin.com
 page = agent.get(login_url)
-
+  
 # fetch the last 20 workouts
-page = agent.get('http://connect.garmin.com/proxy/activity-search-service-1.0/axm/activities?')
+page = agent.get('http://connect.garmin.com/activities')
 
 xml = Nokogiri::XML(page.body)
 xml.remove_namespaces!
 
-xml.xpath("//activity").each do |activity| 
-  id = activity.attribute('idValue').value
-  type = activity.attribute('activityType').value[/_(.*)/, 1]
-  date_str = activity.xpath("summary/measurement[@measurementActivityField='measurementActivityField_beginTimestamp']").attribute("dateValue").value
+xml.xpath("//tr[starts-with(@id, 'activitiesForm:activitiesGrid:n:')]").each do |activity| 
+  id =  activity.css('td:eq(3) a').first['href'][/\d*$/]
+  type = activity.css('td:eq(4)').text
+  date_str = activity.css('td:eq(6)').text
   date = DateTime.parse(date_str)
   filename = "#{date.strftime('%Y%m%d-%H%M')}_#{type}_garmin.gpx"
   puts filename
